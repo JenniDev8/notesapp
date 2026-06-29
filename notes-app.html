@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sidebar-bg: #2d1520;
+    --sidebar-text: #f0c8d4;
+    --sidebar-active: #4a2535;
+    --sidebar-hover: #3d1f2a;
+    --sidebar-accent: #f7b8ca;
+    --list-bg: #fff0f4;
+    --list-border: #f5d0db;
+    --list-hover: #fde4ec;
+    --list-active: #fff;
+    --editor-bg: #ffffff;
+    --text-primary: #2d1520;
+    --text-secondary: #7a4d5a;
+    --text-muted: #b08090;
+    --accent: #d4607a;
+    --accent-light: #fde8ee;
+    --star-color: #e8849a;
+    --border: #f0c8d4;
+    --toolbar-bg: #fff5f7;
+    --tag-bg: #fde8ee;
+    --tag-text: #9a4d6a;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --shadow: 0 2px 12px rgba(212,96,122,0.10);
+    --radius: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--list-bg);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border-right: 1px solid #4a2535;
+  }
+
+  .sidebar-header {
+    padding: 20px 16px 14px;
+    border-bottom: 1px solid #4a2535;
+  }
+
+  .app-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--sidebar-accent);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .app-logo svg { opacity: 0.9; }
+
+  .new-note-btn {
+    margin-top: 12px;
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+
+  .new-note-btn:hover { background: #bf4d66; }
+
+  .sidebar-search {
+    padding: 10px 12px;
+    border-bottom: 1px solid #4a2535;
+  }
+
+  .sidebar-search input {
+    width: 100%;
+    background: #3d1f2a;
+    border: 1px solid #5a2d40;
+    border-radius: 6px;
+    padding: 6px 10px 6px 28px;
+    color: var(--sidebar-text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    outline: none;
+    position: relative;
+  }
+
+  .sidebar-search input::placeholder { color: #9a6070; }
+  .sidebar-search input:focus { border-color: var(--sidebar-accent); }
+
+  .search-wrap { position: relative; }
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9a6070;
+    pointer-events: none;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 8px;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9a6070;
+    padding: 8px 8px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--sidebar-hover); }
+  .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-accent); }
+
+  .nav-item svg { flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active svg { opacity: 1; }
+
+  .nav-item .count {
+    margin-left: auto;
+    font-size: 11px;
+    color: #c090a0;
+    background: #3d1f2a;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .sidebar-tags {
+    padding: 8px 8px 4px;
+    border-top: 1px solid #4a2535;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #3d1f2a;
+    color: #c090a0;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin: 2px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .tag-chip:hover { background: #4a2535; color: #f0c8d4; }
+  .tag-chip.active { background: #5a2d40; color: var(--sidebar-accent); }
+
+  /* NOTE LIST */
+  .note-list-panel {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--list-bg);
+    border-right: 1px solid var(--list-border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--list-border);
+  }
+
+  .list-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .empty-trash-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border: 1px solid var(--danger);
+    border-radius: 5px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--danger);
+    transition: all 0.1s;
+  }
+
+  .empty-trash-btn:hover { background: #fdf2f2; }
+
+  .list-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .list-count { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .note-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+
+  .note-item {
+    padding: 11px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    transition: all 0.1s;
+    position: relative;
+  }
+
+  .note-item:hover { background: var(--list-hover); }
+  .note-item.active { background: var(--list-active); border-color: var(--border); box-shadow: var(--shadow); }
+
+  .note-item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+    padding-right: 16px;
+  }
+
+  .note-item-preview {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+
+  .note-item-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .note-item-date {
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+
+  .note-item-tags {
+    display: flex;
+    gap: 3px;
+  }
+
+  .note-tag {
+    font-size: 9.5px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  .star-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: var(--star-color);
+    font-size: 12px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    font-size: 12px;
+    gap: 8px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .empty-state svg { opacity: 0.3; }
+
+  /* EDITOR */
+  .editor-panel {
+    flex: 1;
+    background: var(--list-bg);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 20px;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-right: 6px;
+    padding-right: 6px;
+    border-right: 1px solid var(--border);
+  }
+
+  .toolbar-group:last-child { border-right: none; }
+
+  .tb-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.1s;
+  }
+
+  .tb-btn:hover { background: var(--accent-light); color: var(--accent); }
+  .tb-btn.active { background: var(--accent-light); color: var(--accent); }
+
+  .tb-btn svg { pointer-events: none; }
+
+  .tb-btn-wide {
+    width: auto;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .tb-select {
+    height: 28px;
+    padding: 0 22px 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--list-bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%237a4d5a' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+  }
+
+  .tb-select:hover,
+  .tb-select:focus {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tb-select-font { min-width: 118px; }
+  .tb-select-size { min-width: 52px; }
+
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    transition: all 0.1s;
+  }
+
+  .action-btn:hover { background: var(--list-hover); }
+  .action-btn.star-btn.starred { color: var(--star-color); border-color: var(--star-color); background: #fde8ee; }
+  .action-btn.trash-btn:hover { color: var(--danger); border-color: var(--danger); background: #fdf2f2; }
+  .action-btn.restore-btn:hover { color: var(--success); border-color: var(--success); background: #f0faf4; }
+
+  .editor-title-wrap {
+    padding: 24px 20% 8px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .editor-title {
+    font-family: 'Lora', serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text-primary);
+    border: none;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    line-height: 1.3;
+  }
+
+  .editor-title::placeholder { color: #ccc; }
+
+  .editor-meta-bar {
+    padding: 8px 20% 8px 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .meta-date {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .tag-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .existing-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .note-tag-pill {
+    font-size: 11px;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .note-tag-pill .remove-tag {
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .note-tag-pill .remove-tag:hover { opacity: 1; }
+
+  .tag-input {
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    background: transparent;
+    width: 90px;
+  }
+
+  .tag-input::placeholder { color: var(--text-muted); }
+
+  .editor-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 20% 32px 48px;
+  }
+
+  .editor-content {
+    min-height: 300px;
+    outline: none;
+    font-family: 'Lora', serif;
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    caret-color: var(--accent);
+    overflow-wrap: break-word;
+    word-break: break-word;
+    overflow-x: hidden;
+  }
+
+  .editor-content:empty::before {
+    content: attr(data-placeholder);
+    color: #ccc;
+    pointer-events: none;
+  }
+
+  .editor-content a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: var(--accent-light);
+    text-underline-offset: 2px;
+  }
+
+  .editor-content a:hover { text-decoration-color: var(--accent); }
+
+  .editor-content b, .editor-content strong { font-weight: 500; }
+
+  .editor-content blockquote {
+    border-left: 3px solid var(--accent-light);
+    padding-left: 16px;
+    margin: 12px 0;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .editor-content h1 { font-size: 1.5em; font-weight: 500; margin: 16px 0 8px; }
+  .editor-content h2 { font-size: 1.25em; font-weight: 500; margin: 14px 0 6px; }
+  .editor-content ul, .editor-content ol { padding-left: 20px; margin: 8px 0; }
+  .editor-content li { margin: 4px 0; }
+
+  .no-note-selected {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 10px;
+  }
+
+  .no-note-selected svg { opacity: 0.15; }
+  .no-note-selected p { font-size: 13px; color: var(--text-muted); }
+
+  /* LINK MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+
+  .modal h3 {
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+
+  .modal-field {
+    margin-bottom: 12px;
+  }
+
+  .modal-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .modal-field input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    color: var(--text-primary);
+    transition: border-color 0.15s;
+  }
+
+  .modal-field input:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .modal-cancel {
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .modal-confirm {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .modal-confirm:hover { background: #bf4d66; }
+
+  .modal-confirm-danger { background: var(--danger); }
+  .modal-confirm-danger:hover { background: #a93226; }
+
+  .modal-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* SCROLLBARS */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #f5d0db; border-radius: 4px; }
+
+  .sidebar ::-webkit-scrollbar-thumb { background: #5a2d40; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #2d1520;
+    color: #f7b8ca;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-family: 'DM Sans', sans-serif;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.2s;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* WORD COUNT */
+  .word-count {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    padding: 6px 20% 6px 48px;
+    border-top: 1px solid var(--border);
+    text-align: right;
+  }
+
+  /* DRAWING MODAL */
+  .draw-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .draw-modal {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    width: min(860px, 94vw);
+    max-height: 90vh;
+    overflow: hidden;
+  }
+
+  .draw-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--toolbar-bg);
+    flex-wrap: wrap;
+  }
+
+  .draw-modal-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-right: 6px;
+  }
+
+  .draw-tool-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding-right: 10px;
+    border-right: 1px solid var(--border);
+    margin-right: 4px;
+  }
+
+  .draw-tool-group:last-of-type { border-right: none; }
+
+  .draw-tb-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.1s;
+    font-size: 13px;
+  }
+
+  .draw-tb-btn:hover { background: var(--accent-light); color: var(--accent); }
+  .draw-tb-btn.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+  .draw-color-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+
+  .draw-color-swatch.active { border-color: #333; transform: scale(1.2); }
+  .draw-color-swatch:hover { transform: scale(1.15); }
+
+  .draw-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .draw-size-wrap input[type=range] {
+    width: 70px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .draw-size-preview {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .draw-canvas-wrap {
+    flex: 1;
+    overflow: auto;
+    background: #f8f8f8;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  #drawCanvas {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+
+  .draw-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--toolbar-bg);
+  }
+
+  .draw-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .draw-footer-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .draw-inserted-img {
+    display: block;
+    max-width: 100%;
+    border-radius: 6px;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .draw-inserted-img:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="app-logo">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+      </svg>
+      Notes
+    </div>
+    <button class="new-note-btn" onclick="createNote()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Note
+    </button>
+  </div>
+
+  <div class="sidebar-search">
+    <div class="search-wrap">
+      <svg class="search-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search notes..." oninput="handleSearch(this.value)">
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Library</div>
+    <div class="nav-item active" id="nav-all" onclick="setView('all')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      All Notes
+      <span class="count" id="count-all">0</span>
+    </div>
+    <div class="nav-item" id="nav-starred" onclick="setView('starred')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Starred
+      <span class="count" id="count-starred">0</span>
+    </div>
+    <div class="nav-item" id="nav-trash" onclick="setView('trash')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Trash
+      <span class="count" id="count-trash">0</span>
+    </div>
+
+    <div class="nav-section-label" style="margin-top:12px">Tags</div>
+    <div id="tags-nav"></div>
+  </nav>
+</aside>
+
+<!-- NOTE LIST -->
+<div class="note-list-panel">
+  <div class="list-header">
+    <div class="list-header-top">
+      <div>
+        <div class="list-title" id="listTitle">All Notes</div>
+        <div class="list-count" id="listCount"></div>
+      </div>
+      <button class="empty-trash-btn" id="emptyTrashBtn" style="display:none" onclick="showEmptyTrashModal()">Empty Trash</button>
+    </div>
+  </div>
+  <div class="note-list" id="noteList"></div>
+</div>
+
+<!-- EDITOR -->
+<div class="editor-panel" id="editorPanel">
+  <div class="no-note-selected" id="noNoteMsg">
+    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <p>Select a note or create a new one</p>
+  </div>
+
+  <div id="editorContainer" style="display:none; flex:1; flex-direction:column; overflow:hidden; display:none;">
+    <div class="editor-toolbar">
+      <div class="toolbar-group">
+        <select class="tb-select tb-select-font" id="fontFaceSelect" title="Font face" onchange="setFontFace(this.value)">
+          <option value="Lora">Serif (Lora)</option>
+          <option value="DM Sans">Sans (DM Sans)</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Arial">Arial</option>
+          <option value="Courier New">Monospace</option>
+        </select>
+        <select class="tb-select tb-select-size" id="fontSizeSelect" title="Font size" onchange="setFontSize(this.value)">
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="15.5" selected>15</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+          <option value="24">24</option>
+          <option value="28">28</option>
+          <option value="32">32</option>
+        </select>
+        <button class="tb-btn tb-btn-wide" title="Clear formatting" onclick="clearFormatting()">T<sub style="font-size:9px">x</sub></button>
+      </div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Bold" onclick="fmt('bold')"><b>B</b></button>
+        <button class="tb-btn" title="Italic" onclick="fmt('italic')"><i>I</i></button>
+        <button class="tb-btn" title="Underline" onclick="fmt('underline')"><u>U</u></button>
+        <button class="tb-btn" title="Strikethrough" onclick="fmt('strikeThrough')"><s>S</s></button>
+      </div>
+      <div class="toolbar-group">
+        <button class="tb-btn tb-btn-wide" title="Heading 1" onclick="fmt('formatBlock','H1')">H1</button>
+        <button class="tb-btn tb-btn-wide" title="Heading 2" onclick="fmt('formatBlock','H2')">H2</button>
+        <button class="tb-btn tb-btn-wide" title="Paragraph" onclick="fmt('formatBlock','P')">P</button>
+      </div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Bulleted list" onclick="fmt('insertUnorderedList')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="tb-btn" title="Numbered list" onclick="fmt('insertOrderedList')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4" stroke-linecap="round"/><path d="M4 10h2" stroke-linecap="round"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tb-btn" title="Quote" onclick="fmt('formatBlock','BLOCKQUOTE')">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
+        </button>
+      </div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Add link" onclick="showLinkModal()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        </button>
+        <button class="tb-btn" title="Remove link" onclick="document.execCommand('unlink')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+      <div class="toolbar-group">
+        <button class="tb-btn" title="Insert drawing (Apple Pencil)" onclick="openDrawModal()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        </button>
+      </div>
+
+      <div class="editor-actions">
+        <button class="action-btn star-btn" id="starBtn" onclick="toggleStar()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Star
+        </button>
+        <button class="action-btn trash-btn" id="trashBtn" onclick="trashNote()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          Trash
+        </button>
+        <button class="action-btn restore-btn" id="restoreBtn" onclick="restoreNote()" style="display:none">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Restore
+        </button>
+        <button class="action-btn" onclick="exportNote()" title="Export as text">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <div class="editor-title-wrap">
+      <input type="text" class="editor-title" id="noteTitle" placeholder="Untitled note" oninput="saveCurrentNote()">
+    </div>
+
+    <div class="editor-meta-bar">
+      <span class="meta-date" id="noteDateMeta"></span>
+      <div class="tag-input-wrap">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#aaa; flex-shrink:0"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <div class="existing-tags" id="existingTags"></div>
+        <input type="text" class="tag-input" id="tagInput" placeholder="Add tag..." onkeydown="handleTagInput(event)">
+      </div>
+    </div>
+
+    <div class="editor-body">
+      <div class="editor-content" id="noteContent" contenteditable="true" data-placeholder="Start writing..." oninput="saveCurrentNote(); updateWordCount()"></div>
+    </div>
+
+    <div class="word-count" id="wordCount">0 words</div>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="modal-overlay" id="linkModal" style="display:none" onclick="if(event.target===this)closeLinkModal()">
+  <div class="modal">
+    <h3>Insert link</h3>
+    <div class="modal-field">
+      <label>Display text</label>
+      <input type="text" id="linkText" placeholder="Link text">
+    </div>
+    <div class="modal-field">
+      <label>URL</label>
+      <input type="text" id="linkUrl" placeholder="https://" onkeydown="if(event.key==='Enter')insertLink()">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeLinkModal()">Cancel</button>
+      <button class="modal-confirm" onclick="insertLink()">Insert link</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPTY TRASH MODAL -->
+<div class="modal-overlay" id="emptyTrashModal" style="display:none" onclick="if(event.target===this)closeEmptyTrashModal()">
+  <div class="modal">
+    <h3>Empty trash?</h3>
+    <p class="modal-text">This will permanently delete <strong id="emptyTrashCount">0</strong> notes. This can't be undone.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeEmptyTrashModal()">Cancel</button>
+      <button class="modal-confirm modal-confirm-danger" onclick="emptyTrash()">Empty trash</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWING MODAL -->
+<div class="draw-modal-overlay" id="drawModal" style="display:none" onclick="if(event.target===this)closeDrawModal()">
+  <div class="draw-modal">
+    <div class="draw-modal-header">
+      <span class="draw-modal-title">Drawing</span>
+
+      <div class="draw-tool-group">
+        <button class="draw-tb-btn active" id="drawToolPen" title="Pen" onclick="setDrawTool('pen')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
+        <button class="draw-tb-btn" id="drawToolMarker" title="Marker (semi-transparent)" onclick="setDrawTool('marker')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+        </button>
+        <button class="draw-tb-btn" id="drawToolEraser" title="Eraser" onclick="setDrawTool('eraser')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 20H7L3 16l13-13 7 7-3 3z"/><path d="M6 11l7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="draw-tool-group">
+        <div class="draw-color-swatch active" style="background:#2d1520" data-color="#2d1520" onclick="setDrawColor(this)" title="Dark"></div>
+        <div class="draw-color-swatch" style="background:#d4607a" data-color="#d4607a" onclick="setDrawColor(this)" title="Rose"></div>
+        <div class="draw-color-swatch" style="background:#e87040" data-color="#e87040" onclick="setDrawColor(this)" title="Orange"></div>
+        <div class="draw-color-swatch" style="background:#4a90d9" data-color="#4a90d9" onclick="setDrawColor(this)" title="Blue"></div>
+        <div class="draw-color-swatch" style="background:#27ae60" data-color="#27ae60" onclick="setDrawColor(this)" title="Green"></div>
+        <div class="draw-color-swatch" style="background:#8e44ad" data-color="#8e44ad" onclick="setDrawColor(this)" title="Purple"></div>
+        <input type="color" id="customColorPicker" value="#2d1520" title="Custom color" onchange="setDrawColorHex(this.value)" style="width:22px;height:22px;border:none;border-radius:50%;cursor:pointer;padding:0;overflow:hidden;background:none;">
+      </div>
+
+      <div class="draw-tool-group">
+        <div class="draw-size-wrap">
+          <div class="draw-size-preview">
+            <svg id="sizeDot" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="3" fill="#2d1520" id="sizeDotCircle"/></svg>
+          </div>
+          <input type="range" id="strokeSizeSlider" min="1" max="30" value="3" oninput="setStrokeSize(this.value)">
+        </div>
+      </div>
+
+      <div class="draw-tool-group" style="margin-left:auto; border-right:none;">
+        <button class="draw-tb-btn" title="Undo last stroke" onclick="undoLastStroke()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 00-4-4H4"/></svg>
+        </button>
+        <button class="draw-tb-btn" title="Clear canvas" onclick="clearCanvas()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="draw-canvas-wrap" id="drawCanvasWrap">
+      <canvas id="drawCanvas" width="780" height="480"></canvas>
+    </div>
+
+    <div class="draw-modal-footer">
+      <span class="draw-hint" id="drawHint">Use Apple Pencil, stylus, or mouse to draw</span>
+      <div class="draw-footer-actions">
+        <button class="modal-cancel" onclick="closeDrawModal()">Cancel</button>
+        <button class="modal-confirm" onclick="insertDrawing()">Insert into note</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  let notes = JSON.parse(localStorage.getItem('jnotes_v1') || '[]');
+  let currentView = 'all';
+  let currentNoteId = null;
+  let searchQuery = '';
+  let savedRange = null;
+  let autoSaveTimer = null;
+
+  // ── Helpers ────────────────────────────────────────────────────
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  function formatDate(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatFullDate(ts) {
+    return new Date(ts).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function save() {
+    localStorage.setItem('jnotes_v1', JSON.stringify(notes));
+  }
+
+  function stripHTML(html) {
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    return d.textContent || '';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ── Note CRUD ──────────────────────────────────────────────────
+  function createNote() {
+    const n = {
+      id: uid(),
+      title: '',
+      content: '',
+      tags: [],
+      starred: false,
+      trashed: false,
+      created: Date.now(),
+      updated: Date.now()
+    };
+    notes.unshift(n);
+    save();
+    if (currentView === 'trash') setView('all');
+    else { renderAll(); selectNote(n.id); }
+    setTimeout(() => document.getElementById('noteTitle').focus(), 50);
+  }
+
+  function getNoteById(id) { return notes.find(n => n.id === id); }
+
+  function saveCurrentNote() {
+    if (!currentNoteId) return;
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    n.title = document.getElementById('noteTitle').value;
+    n.content = document.getElementById('noteContent').innerHTML;
+    n.updated = Date.now();
+    save();
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(renderNoteList, 800);
+  }
+
+  function selectNote(id) {
+    currentNoteId = id;
+    const n = getNoteById(id);
+    if (!n) { showNoNote(); return; }
+
+    document.getElementById('noNoteMsg').style.display = 'none';
+    const ec = document.getElementById('editorContainer');
+    ec.style.display = 'flex';
+    ec.style.flexDirection = 'column';
+    ec.style.overflow = 'hidden';
+    ec.style.flex = '1';
+
+    document.getElementById('noteTitle').value = n.title;
+    document.getElementById('noteContent').innerHTML = n.content;
+    document.getElementById('noteDateMeta').textContent = formatFullDate(n.updated);
+
+    renderTagPills(n);
+    updateStarBtn(n);
+    updateTrashBtn(n);
+    updateWordCount();
+    renderNoteList();
+  }
+
+  function showNoNote() {
+    currentNoteId = null;
+    document.getElementById('noNoteMsg').style.display = 'flex';
+    document.getElementById('editorContainer').style.display = 'none';
+  }
+
+  function toggleStar() {
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    n.starred = !n.starred;
+    n.updated = Date.now();
+    save();
+    updateStarBtn(n);
+    renderAll();
+    showToast(n.starred ? 'Note starred' : 'Star removed');
+  }
+
+  function trashNote() {
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    n.trashed = true;
+    n.updated = Date.now();
+    save();
+    showNoNote();
+    renderAll();
+    showToast('Moved to trash');
+  }
+
+  function restoreNote() {
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    n.trashed = false;
+    n.updated = Date.now();
+    save();
+    setView('all');
+    showToast('Note restored');
+  }
+
+  function showEmptyTrashModal() {
+    const count = notes.filter(n => n.trashed).length;
+    if (!count) return;
+    document.getElementById('emptyTrashCount').textContent = count;
+    document.getElementById('emptyTrashModal').style.display = 'flex';
+  }
+
+  function closeEmptyTrashModal() {
+    document.getElementById('emptyTrashModal').style.display = 'none';
+  }
+
+  function emptyTrash() {
+    const count = notes.filter(n => n.trashed).length;
+    if (!count) return;
+    notes = notes.filter(n => !n.trashed);
+    save();
+    closeEmptyTrashModal();
+    showNoNote();
+    renderAll();
+    showToast(count + ' note' + (count !== 1 ? 's' : '') + ' permanently deleted');
+  }
+
+  function updateStarBtn(n) {
+    const btn = document.getElementById('starBtn');
+    btn.classList.toggle('starred', n.starred);
+    btn.innerHTML = n.starred
+      ? '<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Starred'
+      : '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Star';
+  }
+
+  function updateTrashBtn(n) {
+    document.getElementById('trashBtn').style.display = n.trashed ? 'none' : 'flex';
+    document.getElementById('starBtn').style.display = n.trashed ? 'none' : 'flex';
+    document.getElementById('restoreBtn').style.display = n.trashed ? 'flex' : 'none';
+  }
+
+  // ── Tags ───────────────────────────────────────────────────────
+  function handleTagInput(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = e.target.value.trim().replace(/,/g, '');
+      if (!val) return;
+      const n = getNoteById(currentNoteId);
+      if (n && !n.tags.includes(val)) {
+        n.tags.push(val);
+        save();
+        renderTagPills(n);
+        renderSideTags();
+      }
+      e.target.value = '';
+    }
+  }
+
+  function removeTag(tag) {
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    n.tags = n.tags.filter(t => t !== tag);
+    save();
+    renderTagPills(n);
+    renderSideTags();
+  }
+
+  function renderTagPills(n) {
+    const wrap = document.getElementById('existingTags');
+    wrap.innerHTML = n.tags.map(t =>
+      `<span class="note-tag-pill">${t}<span class="remove-tag" onclick="removeTag('${t}')">&times;</span></span>`
+    ).join('');
+  }
+
+  function allTags() {
+    const set = new Set();
+    notes.filter(n => !n.trashed).forEach(n => n.tags.forEach(t => set.add(t)));
+    return [...set];
+  }
+
+  function renderSideTags() {
+    const tags = allTags();
+    const nav = document.getElementById('tags-nav');
+    if (!tags.length) { nav.innerHTML = '<div style="font-size:11px;color:#444;padding:4px 8px;">No tags yet</div>'; return; }
+    nav.innerHTML = tags.map(t =>
+      `<div class="nav-item" onclick="filterByTag('${t}')" id="tag-nav-${t}">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg>
+        ${t}
+      </div>`
+    ).join('');
+  }
+
+  function filterByTag(tag) {
+    searchQuery = '';
+    document.getElementById('searchInput').value = '';
+    setView('tag:' + tag);
+  }
+
+  // ── Views ──────────────────────────────────────────────────────
+  function setView(view) {
+    currentView = view;
+    ['all','starred','trash'].forEach(v => {
+      document.getElementById('nav-' + v)?.classList.toggle('active', view === v);
+    });
+    const titles = { all: 'All Notes', starred: 'Starred', trash: 'Trash' };
+    if (view.startsWith('tag:')) {
+      document.getElementById('listTitle').textContent = '#' + view.replace('tag:','');
+    } else {
+      document.getElementById('listTitle').textContent = titles[view] || 'Notes';
+    }
+    showNoNote();
+    renderAll();
+  }
+
+  function getFilteredNotes() {
+    let list = notes;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(n => !n.trashed && (
+        n.title.toLowerCase().includes(q) ||
+        stripHTML(n.content).toLowerCase().includes(q) ||
+        n.tags.some(t => t.toLowerCase().includes(q))
+      ));
+      return list;
+    }
+    if (currentView === 'all') list = list.filter(n => !n.trashed);
+    else if (currentView === 'starred') list = list.filter(n => n.starred && !n.trashed);
+    else if (currentView === 'trash') list = list.filter(n => n.trashed);
+    else if (currentView.startsWith('tag:')) {
+      const tag = currentView.replace('tag:','');
+      list = list.filter(n => !n.trashed && n.tags.includes(tag));
+    }
+    return list;
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────
+  function renderNoteList() {
+    const filtered = getFilteredNotes();
+    const list = document.getElementById('noteList');
+    document.getElementById('listCount').textContent = filtered.length + ' note' + (filtered.length !== 1 ? 's' : '');
+    updateCounts();
+    updateEmptyTrashBtn();
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>No notes here</span>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(n => {
+      const preview = stripHTML(n.content).trim().substring(0, 80) || 'No content';
+      return `<div class="note-item ${n.id === currentNoteId ? 'active' : ''}" onclick="selectNote('${n.id}')">
+        <div class="note-item-title">${n.title || 'Untitled'}</div>
+        <div class="note-item-preview">${preview}</div>
+        <div class="note-item-meta">
+          <span class="note-item-date">${formatDate(n.updated)}</span>
+          <div class="note-item-tags">${n.tags.slice(0,2).map(t => `<span class="note-tag">${t}</span>`).join('')}</div>
+        </div>
+        ${n.starred ? '<span class="star-badge">&#9733;</span>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function updateCounts() {
+    document.getElementById('count-all').textContent = notes.filter(n => !n.trashed).length;
+    document.getElementById('count-starred').textContent = notes.filter(n => n.starred && !n.trashed).length;
+    document.getElementById('count-trash').textContent = notes.filter(n => n.trashed).length;
+  }
+
+  function updateEmptyTrashBtn() {
+    const trashedCount = notes.filter(n => n.trashed).length;
+    document.getElementById('emptyTrashBtn').style.display =
+      currentView === 'trash' && !searchQuery && trashedCount > 0 ? 'block' : 'none';
+  }
+
+  function renderAll() {
+    renderNoteList();
+    renderSideTags();
+  }
+
+  // ── Formatting ─────────────────────────────────────────────────
+  function fmt(cmd, val) {
+    document.getElementById('noteContent').focus();
+    document.execCommand(cmd, false, val || null);
+    saveCurrentNote();
+  }
+
+  function setFontFace(face) {
+    const content = document.getElementById('noteContent');
+    content.focus();
+    document.execCommand('fontName', false, face);
+    saveCurrentNote();
+  }
+
+  function setFontSize(px) {
+    const content = document.getElementById('noteContent');
+    content.focus();
+    document.execCommand('fontSize', false, '7');
+    content.querySelectorAll('font[size="7"]').forEach(el => {
+      el.removeAttribute('size');
+      el.style.fontSize = px + 'px';
+    });
+    saveCurrentNote();
+  }
+
+  function clearFormatting() {
+    const content = document.getElementById('noteContent');
+    content.focus();
+    document.execCommand('removeFormat', false, null);
+    content.querySelectorAll('[style*="font"]').forEach(el => {
+      el.style.fontFamily = '';
+      el.style.fontSize = '';
+      el.style.fontWeight = '';
+      el.style.fontStyle = '';
+      el.style.textDecoration = '';
+      if (!el.getAttribute('style')) el.removeAttribute('style');
+    });
+    content.querySelectorAll('font').forEach(el => {
+      const parent = el.parentNode;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    });
+    saveCurrentNote();
+  }
+
+  // ── Link Modal ─────────────────────────────────────────────────
+  function showLinkModal() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+    const selText = sel ? sel.toString() : '';
+    document.getElementById('linkText').value = selText;
+    document.getElementById('linkUrl').value = '';
+    document.getElementById('linkModal').style.display = 'flex';
+    setTimeout(() => document.getElementById(selText ? 'linkUrl' : 'linkText').focus(), 50);
+  }
+
+  function closeLinkModal() {
+    document.getElementById('linkModal').style.display = 'none';
+    savedRange = null;
+  }
+
+  function insertLink() {
+    const text = document.getElementById('linkText').value.trim();
+    let url = document.getElementById('linkUrl').value.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+    const content = document.getElementById('noteContent');
+    content.focus();
+
+    if (savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    }
+
+    if (text && (!window.getSelection().toString())) {
+      document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+    } else {
+      document.execCommand('createLink', false, url);
+      const links = content.querySelectorAll('a');
+      links.forEach(a => { if (a.href === url || a.getAttribute('href') === url) a.target = '_blank'; });
+    }
+
+    closeLinkModal();
+    saveCurrentNote();
+    showToast('Link inserted');
+  }
+
+  // ── Search ─────────────────────────────────────────────────────
+  function handleSearch(val) {
+    searchQuery = val;
+    if (val) {
+      document.getElementById('listTitle').textContent = 'Search results';
+    } else {
+      const titles = { all: 'All Notes', starred: 'Starred', trash: 'Trash' };
+      document.getElementById('listTitle').textContent = currentView.startsWith('tag:')
+        ? '#' + currentView.replace('tag:','')
+        : titles[currentView];
+    }
+    renderNoteList();
+  }
+
+  // ── Export ─────────────────────────────────────────────────────
+  function exportNote() {
+    const n = getNoteById(currentNoteId);
+    if (!n) return;
+    const text = `${n.title || 'Untitled'}\n${'='.repeat(40)}\n\n${stripHTML(n.content)}\n\nTags: ${n.tags.join(', ') || 'none'}\nDate: ${new Date(n.updated).toLocaleString()}`;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (n.title || 'note') + '.txt';
+    a.click();
+    showToast('Note exported');
+  }
+
+  // ── Word Count ─────────────────────────────────────────────────
+  function updateWordCount() {
+    const text = stripHTML(document.getElementById('noteContent').innerHTML).trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const chars = text.length;
+    document.getElementById('wordCount').textContent = `${words} word${words !== 1 ? 's' : ''} · ${chars} char${chars !== 1 ? 's' : ''}`;
+  }
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); createNote(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k' && currentNoteId) { e.preventDefault(); showLinkModal(); }
+  });
+
+  // ── Init ───────────────────────────────────────────────────────
+  renderAll();
+  if (notes.filter(n => !n.trashed).length > 0) {
+    selectNote(notes.find(n => !n.trashed).id);
+  }
+
+  // ── Drawing ────────────────────────────────────────────────────
+  let drawTool = 'pen';
+  let drawColor = '#2d1520';
+  let strokeSize = 3;
+  let isDrawing = false;
+  let lastX = 0, lastY = 0, lastMidX = 0, lastMidY = 0;
+  let strokes = [];
+  let currentStroke = false;
+  let editingDrawingImg = null;
+  let penDetected = false;
+  let penTimeoutId = null;
+
+  function openDrawModal(imgToEdit) {
+    if (!currentNoteId) { showToast('Select a note first'); return; }
+    editingDrawingImg = imgToEdit || null;
+    const modal = document.getElementById('drawModal');
+    modal.style.display = 'flex';
+    document.querySelector('.draw-modal-title').textContent = imgToEdit ? 'Edit Drawing' : 'New Drawing';
+    requestAnimationFrame(() => {
+      const canvas = document.getElementById('drawCanvas');
+      const wrap = document.getElementById('drawCanvasWrap');
+      const newW = Math.max(wrap.clientWidth - 32, 400);
+      const newH = Math.max(wrap.clientHeight - 32, 400);
+      canvas.width = newW;
+      canvas.height = newH;
+      const ctx = canvas.getContext('2d');
+      if (imgToEdit) {
+        const tmp = new Image();
+        tmp.onload = () => {
+          ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+          strokes = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        };
+        tmp.src = imgToEdit.src;
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        strokes = [];
+      }
+      setDrawTool('pen');
+      updateSizeDot();
+    });
+  }
+
+  function closeDrawModal() {
+    document.getElementById('drawModal').style.display = 'none';
+    strokes = [];
+    editingDrawingImg = null;
+  }
+
+  function setDrawTool(tool) {
+    drawTool = tool;
+    ['pen','marker','eraser'].forEach(t => {
+      document.getElementById('drawTool' + t.charAt(0).toUpperCase() + t.slice(1))
+        .classList.toggle('active', t === tool);
+    });
+  }
+
+  function setDrawColor(el) {
+    document.querySelectorAll('.draw-color-swatch').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    drawColor = el.dataset.color;
+    document.getElementById('customColorPicker').value = drawColor;
+    updateSizeDot();
+  }
+
+  function setDrawColorHex(hex) {
+    document.querySelectorAll('.draw-color-swatch').forEach(s => s.classList.remove('active'));
+    drawColor = hex;
+    updateSizeDot();
+  }
+
+  function setStrokeSize(val) {
+    strokeSize = parseInt(val);
+    updateSizeDot();
+  }
+
+  function updateSizeDot() {
+    const r = Math.min(strokeSize * 0.7 + 1, 9);
+    const dot = document.getElementById('sizeDotCircle');
+    dot.setAttribute('r', r);
+    dot.setAttribute('fill', drawTool === 'eraser' ? '#ccc' : drawColor);
+  }
+
+  function getCanvasPos(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  function setupCanvas() {
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'pen') {
+        penDetected = true;
+        clearTimeout(penTimeoutId);
+        penTimeoutId = setTimeout(() => { penDetected = false; }, 3000);
+      }
+      if (e.pointerType === 'touch' && penDetected) return;
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      isDrawing = true;
+      currentStroke = true;
+
+      const pos = getCanvasPos(e, canvas);
+      lastX = pos.x;
+      lastY = pos.y;
+      lastMidX = pos.x;
+      lastMidY = pos.y;
+
+      strokes.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+
+      applyCtxStyle(ctx, e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.arc(lastX, lastY, getLineWidth(e) / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+    });
+
+    canvas.addEventListener('pointermove', e => {
+      if (!isDrawing) return;
+      if (e.pointerType === 'touch' && penDetected) return;
+      e.preventDefault();
+
+      const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ev of events) {
+        const pos = getCanvasPos(ev, canvas);
+        const midX = (lastX + pos.x) / 2;
+        const midY = (lastY + pos.y) / 2;
+        applyCtxStyle(ctx, ev);
+        ctx.beginPath();
+        ctx.moveTo(lastMidX, lastMidY);
+        ctx.quadraticCurveTo(lastX, lastY, midX, midY);
+        ctx.stroke();
+        lastMidX = midX;
+        lastMidY = midY;
+        lastX = pos.x;
+        lastY = pos.y;
+      }
+
+      if (e.pointerType === 'pen') {
+        document.getElementById('drawHint').textContent =
+          'Apple Pencil · pressure: ' + e.pressure.toFixed(2);
+      }
+    });
+
+    canvas.addEventListener('pointerup', e => {
+      isDrawing = false;
+      currentStroke = false;
+    });
+
+    canvas.addEventListener('pointercancel', () => {
+      isDrawing = false;
+    });
+  }
+
+  function getLineWidth(e) {
+    if (drawTool === 'eraser') return strokeSize * 4;
+    // Apple Pencil pressure — falls back to 0.5 for mouse
+    const pressure = (e.pressure > 0) ? e.pressure : 0.5;
+    return Math.max(0.5, strokeSize * pressure * 1.8);
+  }
+
+  function applyCtxStyle(ctx, e) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (drawTool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.lineWidth = strokeSize * 4;
+    } else if (drawTool === 'marker') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.35;
+      ctx.strokeStyle = drawColor;
+      ctx.fillStyle = drawColor;
+      ctx.lineWidth = getLineWidth(e) * 3;
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = drawColor;
+      ctx.fillStyle = drawColor;
+      ctx.lineWidth = getLineWidth(e);
+    }
+  }
+
+  function undoLastStroke() {
+    if (!strokes.length) return;
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.putImageData(strokes.pop(), 0, 0);
+  }
+
+  function clearCanvas() {
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    strokes.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function insertDrawing() {
+    const canvas = document.getElementById('drawCanvas');
+    const dataUrl = canvas.toDataURL('image/png');
+
+    if (editingDrawingImg) {
+      editingDrawingImg.src = dataUrl;
+      editingDrawingImg = null;
+      saveCurrentNote();
+      closeDrawModal();
+      showToast('Drawing updated');
+      return;
+    }
+
+    const content = document.getElementById('noteContent');
+    content.focus();
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.className = 'draw-inserted-img';
+    img.title = 'Tap to edit this drawing';
+
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      range.collapse(false);
+      range.insertNode(img);
+      range.setStartAfter(img);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      content.appendChild(img);
+    }
+
+    saveCurrentNote();
+    closeDrawModal();
+    showToast('Drawing inserted — tap to edit');
+  }
+
+  // init canvas after DOM ready
+  setupCanvas();
+
+  // tap any inserted drawing to re-open it for editing
+  document.getElementById('noteContent').addEventListener('click', e => {
+    if (e.target.classList.contains('draw-inserted-img')) {
+      openDrawModal(e.target);
+    }
+  });
+</script>
+</body>
+</html>
